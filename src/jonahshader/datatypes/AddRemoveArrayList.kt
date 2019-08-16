@@ -1,6 +1,6 @@
 package jonahshader.datatypes
 
-class AddRemoveArrayListKt<T> : ArrayList<T>() {
+class AddRemoveArrayList<T> : ArrayList<T>() {
     private val addQueue = ArrayList<T>()
     private val removeQueue = ArrayList<T>()
 

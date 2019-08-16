@@ -3,6 +3,9 @@ package jonahshader
 import processing.core.PApplet
 
 class ALifeApp : PApplet() {
+
+    private val world = World(256, 256, 8)
+
     override fun settings() {
         size(640, 480);
     }
@@ -12,6 +15,8 @@ class ALifeApp : PApplet() {
     }
 
     override fun draw() {
-        background(255);
+        background(255)
+        world.run()
+        world.draw(this)
     }
 }
