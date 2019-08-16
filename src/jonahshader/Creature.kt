@@ -17,15 +17,13 @@ class Creature(var x: Float, var y: Float, val world: World) {
     private var size = 0f // diameter
     private var normalForce = 0f // newtons from gravity
 
+    private var xSpeed = 0f
+    private var ySpeed = 0f
+
     private val brain = NeuralNetwork(4, 2, 10, relu)
 
-    private var direction = 0.0f
-    private var speed = 0.0f
-
     fun run() {
-        x += cos(direction) * speed
-        y += sin(direction) * speed
-        direction += random().toFloat()
+        var xForce =
     }
 
     fun draw(graphics: PApplet) {
