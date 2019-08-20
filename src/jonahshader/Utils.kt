@@ -9,7 +9,7 @@ fun wrap(value: Float, limit: Float) : Float {
     }
 }
 
-fun warp(value: Int, limit: Int) : Int {
+fun wrap(value: Int, limit: Int) : Int {
     val remainder = value.rem(limit)
     return if (remainder < 0) {
         remainder + limit

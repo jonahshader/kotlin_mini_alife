@@ -3,11 +3,12 @@ package jonahshader
 import processing.core.PApplet
 
 class ALifeApp : PApplet() {
-
-    private val world = World(256, 256, 8)
+    private var noDraw = false
+    private val world = World(64, 64, 100)
 
     override fun settings() {
-        size(640, 480);
+        size(512, 512)
+        noSmooth()
     }
 
     override fun setup() {
@@ -15,8 +16,20 @@ class ALifeApp : PApplet() {
     }
 
     override fun draw() {
+        scale(8f)
         background(255)
-        world.run()
-        world.draw(this)
+        if (noDraw)
+            for (i in 1..100)
+                world.run()
+        else {
+            world.run()
+            world.draw(this)
+        }
+    }
+
+    override fun keyPressed() {
+        if (key.toLowerCase() == 'd') {
+            noDraw = !noDraw;
+        }
     }
 }

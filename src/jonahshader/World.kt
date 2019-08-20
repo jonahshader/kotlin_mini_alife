@@ -4,8 +4,8 @@ import jonahshader.datatypes.AddRemoveArrayList
 import processing.core.PApplet
 
 class World(val width: Int, val height: Int, creatureCount: Int) {
-    private val creatures = AddRemoveArrayList<Creature>()
-
+    val creatures = AddRemoveArrayList<Creature>()
+    val food = Food(this, 2)
 
     init {
         for (i in 0 until creatureCount) {
@@ -14,6 +14,7 @@ class World(val width: Int, val height: Int, creatureCount: Int) {
     }
 
     fun run() {
+        food.run()
         for (creature in creatures) {
             creature.run()
         }
@@ -21,6 +22,7 @@ class World(val width: Int, val height: Int, creatureCount: Int) {
     }
 
     fun draw(graphics: PApplet) {
+        food.draw(graphics)
         for (creature in creatures) {
             creature.draw(graphics)
         }
