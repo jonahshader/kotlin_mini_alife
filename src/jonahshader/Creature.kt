@@ -11,6 +11,7 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
     private val speedScale = 0.008f
     private val eatRate = 0.001f
     private val foodToMass = 100f
+    private val sensorPositionMutationRate = 0.02f
 
     private var red = random().toFloat()
     private var green = random().toFloat()
@@ -18,7 +19,7 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
 
     private val density = 50f // kilograms per meter cubed
     private val g = 9.8f // meters per second squared
-    private val friction = 0.99f // low values is lower friction. 1.0 is max
+    private val friction = 0.995f // low values is lower friction. 1.0 is max
 
     private var mass = 30f // kilograms
     private var size = 0f // diameter
@@ -30,7 +31,12 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
     private var greenEatRate = 0f
     private var blueEatRate = 0f
 
-    private var brain = NeuralNetwork(5, 5, 4, tanh)
+    private var sensor1XOffset = 0f
+    private var sensor1YOffset = 0f
+    private var sensor2XOffset = 0f
+    private var sensor2YOffset = 0f
+
+    private var brain = NeuralNetwork(8, 6, 8, 0, relu)
 
     init {
         updateSize()
@@ -39,15 +45,40 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
         greenEatRate = Math.random().toFloat()
         blueEatRate = Math.random().toFloat()
         normalizePowColorEatRates(1.25f)
+
+//        sensor1XOffset = random().toFloat() - 0.5f
+//        sensor1YOffset = random().toFloat() - 0.5f
+//        sensor2XOffset = random().toFloat() - 0.5f
+//        sensor2YOffset = random().toFloat() - 0.5f
     }
 
+    constructor(parent: Creature) : this(parent.x, parent.y, parent.world) {
+        brain = NeuralNetwork(parent.brain)
+        brain.mutate(world.rand)
+        red = mutateValueLimited(parent.red, colorVariance)
+        green = mutateValueLimited(parent.green, colorVariance)
+        blue = mutateValueLimited(parent.blue, colorVariance)
+
+        redEatRate = mutateValueLimitedGaussian(parent.redEatRate, eatColorMutationRate)
+        greenEatRate = mutateValueLimitedGaussian(parent.greenEatRate, eatColorMutationRate)
+        blueEatRate = mutateValueLimitedGaussian(parent.blueEatRate, eatColorMutationRate)
+        normalizePowColorEatRates(1.25f)
+
+//        sensor1XOffset = mutateValueLimitedGaussian(parent.sensor1XOffset, sensorPositionMutationRate)
+//        sensor1YOffset = mutateValueLimitedGaussian(parent.sensor1YOffset, sensorPositionMutationRate)
+//        sensor2XOffset = mutateValueLimitedGaussian(parent.sensor2XOffset, sensorPositionMutationRate)
+//        sensor2YOffset = mutateValueLimitedGaussian(parent.sensor2YOffset, sensorPositionMutationRate)
+    }
 
     fun run() {
         brain.inputNeurons[0] = xSpeed
         brain.inputNeurons[1] = ySpeed
-        brain.inputNeurons[2] = world.food.readFood(x, y, FoodColor.RED) * 2f
-        brain.inputNeurons[3] = world.food.readFood(x, y, FoodColor.GREEN) * 2f
-        brain.inputNeurons[4] = world.food.readFood(x, y, FoodColor.BLUE) * 2f
+        for (i in 2..4)
+            brain.inputNeurons[i] = world.food.readFood(x + sensor1XOffset, y + sensor1YOffset, i - 2) * 2f
+        for (i in 5..7)
+            brain.inputNeurons[i] = world.food.readFood(x - sensor2XOffset, y - sensor2YOffset, i - 5) * 2f
+//        for (i in 8..10)
+//            brain.inputNeurons[i] = world.food.readFood(x + 1, y, i - 8) * 2f
 //        brain.inputNeurons[0] = world.food.readFood(x - 1f, y, FoodColor.RED) * 2f
 //        brain.inputNeurons[1] = world.food.readFood(x + 1f, y, FoodColor.RED) * 2f
 //        brain.inputNeurons[2] = world.food.readFood(x, y - 1f, FoodColor.RED) * 2f
@@ -77,31 +108,30 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
         mass += world.food.eatFood(x, y, FoodColor.GREEN, eatRate * greenEatRate) * foodToMass
         mass += world.food.eatFood(x, y, FoodColor.BLUE, eatRate * blueEatRate) * foodToMass
 
-        if (mass > 35) {
+        sensor1XOffset *= 0.9f
+        sensor1YOffset *= 0.9f
+        sensor2XOffset *= 0.9f
+        sensor2YOffset *= 0.9f
+
+        sensor1XOffset += brain.outputNeurons[2] * .01f
+        sensor1YOffset += brain.outputNeurons[3] * .01f
+        sensor2XOffset += brain.outputNeurons[4] * .01f
+        sensor2YOffset += brain.outputNeurons[5] * .01f
+
+        if (mass > 36) {
             world.creatures.addQueued(Creature(this))
-            world.creatures.addQueued(Creature(this))
-//            mass -= 20
-            world.creatures.removeQueued(this)
+//            world.creatures.addQueued(Creature(this))
+//            world.creatures.addQueued(Creature(this))
+//            world.creatures.addQueued(Creature(this))
+            mass -= 10
+//            world.creatures.removeQueued(this)
         } else if (mass < 0) {
             world.creatures.removeQueued(this)
         }
 
-        mass -= 0.02f
+        mass -= 0.025f
         //println(mass)
         updateSize()
-    }
-
-    constructor(parent: Creature) : this(parent.x, parent.y, parent.world) {
-        brain = NeuralNetwork(parent.brain)
-        brain.mutate()
-        red = mutateValueLimited(parent.red, colorVariance)
-        green = mutateValueLimited(parent.green, colorVariance)
-        blue = mutateValueLimited(parent.blue, colorVariance)
-
-        redEatRate = mutateValueLimitedGaussian(parent.redEatRate, eatColorMutationRate)
-        greenEatRate = mutateValueLimitedGaussian(parent.greenEatRate, eatColorMutationRate)
-        blueEatRate = mutateValueLimitedGaussian(parent.blueEatRate, eatColorMutationRate)
-        normalizePowColorEatRates(1.25f)
     }
 
     fun draw(graphics: PApplet) {
@@ -110,6 +140,17 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
 //        graphics.fill(red * 255, green * 255, blue * 255)
         graphics.fill(redEatRate * 255, greenEatRate * 255, blueEatRate * 255)
         graphics.ellipse(x, y, size, size)
+
+//        graphics.stroke(0)
+//        graphics.strokeWeight(1f/2f)
+//        val worldToPixel = graphics.pixelWidth / world.width.toFloat()
+//        graphics.pixels[wrap((x + sensor1XOffset) * worldToPixel, graphics.pixelWidth.toFloat()).toInt() +
+//                (wrap((y + sensor1YOffset) * worldToPixel, graphics.pixelWidth.toFloat()).toInt() * graphics.pixelWidth)] = 0
+//        graphics.pixels[wrap((x + sensor2XOffset) * worldToPixel, graphics.pixelWidth.toFloat()).toInt() +
+//                (wrap((y + sensor2YOffset) * worldToPixel, graphics.pixelWidth.toFloat()).toInt() * graphics.pixelWidth)] = 0
+        graphics.fill(0)
+        graphics.ellipse(x + sensor1XOffset, y + sensor1YOffset, 0.5f * size, 0.5f * size)
+        graphics.ellipse(x + sensor2XOffset, y + sensor2YOffset, 0.5f * size, 0.5f * size)
     }
 
 

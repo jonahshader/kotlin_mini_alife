@@ -1,12 +1,15 @@
 package jonahshader
 
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.sqrt
 import kotlin.math.tanh
 
 class NeuralNetwork() {
 
-    private val mutationScale = 0.1f
+    private val mutationScale = 0.01f
     private lateinit var activation: (Float)->Float
+    private var recursiveNeurons = 0
 
     val inputNeurons = ArrayList<Float>()
     val outputNeurons = ArrayList<Float>()
@@ -15,23 +18,24 @@ class NeuralNetwork() {
     private val inputToHiddenLayer = ArrayList<ArrayList<Float>>()
     private val hiddenToOutputLayer = ArrayList<ArrayList<Float>>()
 
-    constructor(inputs: Int, outputs: Int, hiddenLayer: Int, activation: (Float)->Float) : this() {
+    constructor(inputs: Int, outputs: Int, hiddenLayer: Int, recursiveNeurons: Int, activation: (Float)->Float) : this() {
         this.activation = activation
-        for (i in 0 until inputs) inputNeurons.add(0f)
-        for (i in 0 until outputs) outputNeurons.add(0f)
+        this.recursiveNeurons = recursiveNeurons
+        for (i in 0 until inputs + recursiveNeurons) inputNeurons.add(0f)
+        for (i in 0 until outputs + recursiveNeurons) outputNeurons.add(0f)
         for (i in 0 until hiddenLayer) hiddenNeurons.add(0f)
 
-        for (i in 0 until (inputs + 1)) {
+        for (i in 0 until (inputs + 1 + recursiveNeurons)) {
             inputToHiddenLayer.add(ArrayList())
             for (j in 0 until hiddenLayer) {
-                inputToHiddenLayer[i].add(xavierWeight(inputs + 1, hiddenLayer))
+                inputToHiddenLayer[i].add(xavierWeight(inputs + 1 + recursiveNeurons, hiddenLayer))
             }
         }
 
         for (i in 0 until hiddenLayer + 1) {
             hiddenToOutputLayer.add(ArrayList())
-            for (j in 0 until outputs) {
-                hiddenToOutputLayer[i].add(xavierWeight(hiddenLayer + 1, outputs))
+            for (j in 0 until outputs + recursiveNeurons) {
+                hiddenToOutputLayer[i].add(xavierWeight(hiddenLayer + 1, outputs + recursiveNeurons))
             }
         }
     }
@@ -96,20 +100,26 @@ class NeuralNetwork() {
                 outputNeurons[j] += hiddenToOutputLayer[hiddenToOutputLayer.size - 1][j]
             }
         }
+
+        // feedback recursive neurons
+        for (i in 0 until recursiveNeurons) {
+            // always use tanh to prevent exploding gradients
+            inputNeurons[inputNeurons.size - 1 - i] = tanh(outputNeurons[outputNeurons.size - 1 - i])
+        }
     }
 
     private fun randomWeight() : Float = ((Math.random() - 0.5) * 2.0).toFloat()
     private fun xavierWeight(fanIn: Int, fanOut: Int) : Float = (Math.random().toFloat() - 0.5f) * 2f * (sqrt(6f) / (sqrt(fanIn.toFloat() + fanOut.toFloat())))
-    fun mutate() {
+    fun mutate(rand: Random) {
         for (weights in inputToHiddenLayer) {
             for (i in weights.indices) {
-                weights[i] += ((Math.random().toFloat() - 0.5f) * 2f) * mutationScale
+                weights[i] += rand.nextGaussian().toFloat() * mutationScale
             }
         }
 
         for (weights in hiddenToOutputLayer) {
             for (i in weights.indices) {
-                weights[i] += ((Math.random().toFloat() - 0.5f) * 2f) * mutationScale
+                weights[i] += rand.nextGaussian().toFloat() * mutationScale
             }
         }
     }

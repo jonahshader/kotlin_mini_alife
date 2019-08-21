@@ -6,8 +6,9 @@ import java.util.*
 
 class World(val width: Int, val height: Int, creatureCount: Int) {
     val creatures = AddRemoveArrayList<Creature>()
-    val food = Food(this, 2)
+    val food = Food(this, 1)
     val rand = Random()
+    var time = 0L
 
     init {
         for (i in 0 until creatureCount) {
@@ -17,13 +18,13 @@ class World(val width: Int, val height: Int, creatureCount: Int) {
 
     fun run() {
         food.run()
-
         creatures.parallelStream().forEach(Creature::run)
-
-        for (creature in creatures) {
-            creature.run()
-        }
         creatures.update()
+        time++
+
+        if (time.rem(100) == 0L) {
+            println("${time/100},${creatures.size}")
+        }
     }
 
     fun draw(graphics: PApplet) {

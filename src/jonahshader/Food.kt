@@ -21,14 +21,15 @@ enum class FoodColor {
 }
 
 class Food(world: World, val cellSize: Int) {
-    private val FOOD_ACCUMULATE_RATE = 0.3f
-    private val FOOD_ADD_CHANCE = 0.00004f
-    private val diffuseChance = 0.001f
-    private val metaFoodAddChanceRatio = 10f
+    private val FOOD_ACCUMULATE_RATE = 8f
+    private val FOOD_ADD_CHANCE = 0.000001f
+    private val diffuseChance = 0.0125f
+    private val metaFoodAddChanceRatio = 2f
 
 
     private val width = world.width / cellSize
     private val height = world.height / cellSize
+
     private val food = Array(width * height * 3) {0f}
 
     init {
@@ -40,8 +41,16 @@ class Food(world: World, val cellSize: Int) {
         return food[(x * 3) + (y * 3 * width) + (color.getInt())]
     }
 
-    private fun setValue(x: Int, y: Int, color: FoodColor, value: Float) {
+    private fun getValue(x: Int, y: Int, color: Int): Float {
+        return food[(x * 3) + (y * 3 * width) + color]
+    }
+
+    @Synchronized fun setValue(x: Int, y: Int, color: FoodColor, value: Float) {
         food[(x * 3) + (y * 3 * width) + (color.getInt())] = value
+    }
+
+    @Synchronized private fun setValue(x: Int, y: Int, color: Int, value: Float) {
+        food[(x * 3) + (y * 3 * width) + color] = value
     }
 
     private fun diffuse(x: Int, y: Int) {
@@ -55,15 +64,17 @@ class Food(world: World, val cellSize: Int) {
         }
     }
 
-    private fun setValue(x: Int, y: Int, color: Int, value: Float) {
-        food[(x * 3) + (y * 3 * width) + color] = value
-    }
 
-    private fun getValue(x: Int, y: Int, color: Int): Float {
-        return food[(x * 3) + (y * 3 * width) + color]
-    }
+
+
 
     fun readFood(x: Float, y: Float, color: FoodColor) : Float {
+        val wrappedY = wrap((y / cellSize).toInt(), height)
+        val wrappedX = wrap((x / cellSize).toInt(), width)
+        return getValue(wrappedX, wrappedY, color)
+    }
+
+    fun readFood(x: Float, y: Float, color: Int) : Float {
         val wrappedY = wrap((y / cellSize).toInt(), height)
         val wrappedX = wrap((x / cellSize).toInt(), width)
         return getValue(wrappedX, wrappedY, color)

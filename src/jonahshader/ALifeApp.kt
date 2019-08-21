@@ -4,7 +4,7 @@ import processing.core.PApplet
 
 class ALifeApp : PApplet() {
     private var noDraw = false
-    private val world = World(64, 64, 300)
+    private val world = World(64, 64, 600)
     private val noDrawDrawRate = 1000L //ms
     private var lastFrameDrawTime = 0L
 
