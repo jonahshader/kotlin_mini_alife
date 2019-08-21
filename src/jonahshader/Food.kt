@@ -2,55 +2,106 @@ package jonahshader
 
 import processing.core.PApplet
 import processing.core.PConstants.CORNER
+import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
+
+enum class FoodColor {
+    RED,
+    GREEN,
+    BLUE;
+
+    fun getInt() : Int {
+        return when (this) {
+            RED -> 0
+            GREEN -> 1
+            BLUE -> 2
+        }
+    }
+}
 
 class Food(world: World, val cellSize: Int) {
-    private val FOOD_ACCUMULATE_RATE = 0.15f
-    private val FOOD_ADD_CHANCE = 0.0001f
-    private val FOOD_DIFFUSE_CHANCE = 0.1f
+    private val FOOD_ACCUMULATE_RATE = 0.3f
+    private val FOOD_ADD_CHANCE = 0.00004f
+    private val diffuseChance = 0.001f
+    private val metaFoodAddChanceRatio = 10f
 
 
-    private val food = ArrayList<ArrayList<Float>>()
     private val width = world.width / cellSize
     private val height = world.height / cellSize
+    private val food = Array(width * height * 3) {0f}
 
     init {
-        for (y in 0 until height) {
-            food.add(ArrayList())
-            for (x in 0 until width) {
-                food[y].add(0f)
-            }
+        for (i in 1..1200)
+            run()
+    }
+
+    private fun getValue(x: Int, y: Int, color: FoodColor) : Float {
+        return food[(x * 3) + (y * 3 * width) + (color.getInt())]
+    }
+
+    private fun setValue(x: Int, y: Int, color: FoodColor, value: Float) {
+        food[(x * 3) + (y * 3 * width) + (color.getInt())] = value
+    }
+
+    private fun diffuse(x: Int, y: Int) {
+        val xd = wrap(x + ((Math.random() * -0.5) * 2.5).roundToInt(), width)
+        val yd = wrap(y + ((Math.random() * -0.5) * 2.5).roundToInt(), height)
+
+        for (i in 0 until 3) {
+            val avg = (getValue(x, y, i) + getValue(xd, yd, i)) / 2.0f
+            setValue(x, y, i, avg)
+            setValue(xd, yd, i, avg)
         }
     }
 
-    fun readFood(x: Float, y: Float) : Float {
-        var wrappedY = wrap((y / cellSize).toInt(), height)
-        var wrappedX = wrap((x / cellSize).toInt(), width)
-        return food[wrappedY][wrappedX]
+    private fun setValue(x: Int, y: Int, color: Int, value: Float) {
+        food[(x * 3) + (y * 3 * width) + color] = value
     }
-    private fun writeFood(x: Float, y: Float, value: Float) {
-        food[(y / cellSize).toInt()][(x / cellSize).toInt()] = value
+
+    private fun getValue(x: Int, y: Int, color: Int): Float {
+        return food[(x * 3) + (y * 3 * width) + color]
     }
-    fun eatFood(x: Float, y: Float, amount: Float) : Float {
-        return if (readFood(x, y) > amount) {
-            writeFood(x, y, readFood(x, y) - amount)
+
+    fun readFood(x: Float, y: Float, color: FoodColor) : Float {
+        val wrappedY = wrap((y / cellSize).toInt(), height)
+        val wrappedX = wrap((x / cellSize).toInt(), width)
+        return getValue(wrappedX, wrappedY, color)
+    }
+
+    fun eatFood(x: Float, y: Float, color: FoodColor, amount: Float) : Float {
+        val wrappedY = wrap((y / cellSize).toInt(), height)
+        val wrappedX = wrap((x / cellSize).toInt(), width)
+
+        return if (getValue(wrappedX, wrappedY, color) > amount) {
+            setValue(wrappedX, wrappedY, color, getValue(wrappedX, wrappedY, color) - amount)
             amount
         } else {
-            val remainingFood = readFood(x, y)
-            writeFood(x, y, 0f)
+            val remainingFood = getValue(wrappedX, wrappedY, color)
+            setValue(wrappedX, wrappedY, color, 0f)
             remainingFood
         }
     }
 
     fun run() {
-        // add some food to the system then diffuse
-        val foodPerTile = FOOD_ACCUMULATE_RATE * cellSize * cellSize
-        for (y in food.indices) {
-            for (x in food[y].indices) {
-                if (Math.random() < FOOD_ADD_CHANCE) {
-                    food[y][x] += foodPerTile
-//                    if (food[y][x] > 1.0f) food[y][x] = 1.0f
+        if (Math.random() < (1 / metaFoodAddChanceRatio)) {
+            // add some food to the system then diffuse
+            val foodPerTile = FOOD_ACCUMULATE_RATE * cellSize * cellSize
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    if (Math.random() < FOOD_ADD_CHANCE * metaFoodAddChanceRatio) {
+                        setValue(x, y, FoodColor.RED, min(foodPerTile + getValue(x, y, FoodColor.RED), foodPerTile))
+                        setValue(x, y, FoodColor.GREEN, min(foodPerTile + getValue(x, y, FoodColor.GREEN), foodPerTile))
+                        setValue(x, y, FoodColor.BLUE, min(foodPerTile + getValue(x, y, FoodColor.BLUE), foodPerTile))
+                    }
                 }
+            }
+        }
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                if (Math.random() < diffuseChance)
+                diffuse(x, y)
             }
         }
     }
@@ -58,9 +109,9 @@ class Food(world: World, val cellSize: Int) {
     fun draw(graphics: PApplet) {
         graphics.noStroke()
         graphics.rectMode(CORNER)
-        for (y in food.indices) {
-            for (x in food[y].indices) {
-                graphics.fill((1 - food[y][x]) * 255)
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                graphics.fill((1 - getValue(x, y, FoodColor.RED)) * 255, (1 - getValue(x, y, FoodColor.GREEN)) * 255, (1 - getValue(x, y, FoodColor.BLUE)) * 255)
                 graphics.rect((x * cellSize).toFloat(),
                     (y * cellSize).toFloat(),
                     cellSize.toFloat(),

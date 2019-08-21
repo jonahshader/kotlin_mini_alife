@@ -2,10 +2,12 @@ package jonahshader
 
 import jonahshader.datatypes.AddRemoveArrayList
 import processing.core.PApplet
+import java.util.*
 
 class World(val width: Int, val height: Int, creatureCount: Int) {
     val creatures = AddRemoveArrayList<Creature>()
     val food = Food(this, 2)
+    val rand = Random()
 
     init {
         for (i in 0 until creatureCount) {
@@ -15,6 +17,9 @@ class World(val width: Int, val height: Int, creatureCount: Int) {
 
     fun run() {
         food.run()
+
+        creatures.parallelStream().forEach(Creature::run)
+
         for (creature in creatures) {
             creature.run()
         }
