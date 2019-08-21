@@ -9,8 +9,8 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
     private val colorVariance = 0.1f
     private val eatColorMutationRate = 0.1f
     private val speedScale = 0.008f
-    private val eatRate = 0.001f
-    private val foodToMass = 100f
+    private val eatRate = 0.006f
+    private val foodToMass = 50f
     private val sensorPositionMutationRate = 0.02f
 
     private var red = random().toFloat()
@@ -36,7 +36,7 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
     private var sensor2XOffset = 0f
     private var sensor2YOffset = 0f
 
-    private var brain = NeuralNetwork(8, 6, 8, 0, relu)
+    private var brain = NeuralNetwork(9, 6, 12, 4, relu)
 
     init {
         updateSize()
@@ -73,10 +73,11 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
     fun run() {
         brain.inputNeurons[0] = xSpeed
         brain.inputNeurons[1] = ySpeed
-        for (i in 2..4)
-            brain.inputNeurons[i] = world.food.readFood(x + sensor1XOffset, y + sensor1YOffset, i - 2) * 2f
-        for (i in 5..7)
-            brain.inputNeurons[i] = world.food.readFood(x - sensor2XOffset, y - sensor2YOffset, i - 5) * 2f
+        brain.inputNeurons[2] = size / 30f
+        for (i in 3..5)
+            brain.inputNeurons[i] = world.food.readFood(x + sensor1XOffset, y + sensor1YOffset, i - 3) * 2f
+        for (i in 6..8)
+            brain.inputNeurons[i] = world.food.readFood(x - sensor2XOffset, y - sensor2YOffset, i - 6) * 2f
 //        for (i in 8..10)
 //            brain.inputNeurons[i] = world.food.readFood(x + 1, y, i - 8) * 2f
 //        brain.inputNeurons[0] = world.food.readFood(x - 1f, y, FoodColor.RED) * 2f

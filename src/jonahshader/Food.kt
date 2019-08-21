@@ -21,10 +21,10 @@ enum class FoodColor {
 }
 
 class Food(world: World, val cellSize: Int) {
-    private val FOOD_ACCUMULATE_RATE = 8f
-    private val FOOD_ADD_CHANCE = 0.000001f
-    private val diffuseChance = 0.0125f
-    private val metaFoodAddChanceRatio = 2f
+    private val FOOD_ACCUMULATE_RATE = 1f
+    private val FOOD_ADD_CHANCE = 0.000008f
+    private val diffuseChance = 0.00f
+    private val metaFoodAddChanceRatio = 1f
 
 
     private val width = world.width / cellSize
@@ -109,10 +109,10 @@ class Food(world: World, val cellSize: Int) {
             }
         }
 
-        for (y in 0 until height) {
-            for (x in 0 until width) {
+        for (y in 0 until height / 2) {
+            for (x in 0 until width / 2) {
                 if (Math.random() < diffuseChance)
-                diffuse(x, y)
+                diffuse(x * 2, y * 2)
             }
         }
     }

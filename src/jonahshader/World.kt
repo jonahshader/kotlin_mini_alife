@@ -6,7 +6,7 @@ import java.util.*
 
 class World(val width: Int, val height: Int, creatureCount: Int) {
     val creatures = AddRemoveArrayList<Creature>()
-    val food = Food(this, 1)
+    val food = Food(this, 2)
     val rand = Random()
     var time = 0L
 
