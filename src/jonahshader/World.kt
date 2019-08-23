@@ -22,8 +22,8 @@ class World(val width: Int, val height: Int, creatureCount: Int) {
         creatures.update()
         time++
 
-        if (time.rem(100) == 0L) {
-            println("${time/100},${creatures.size}")
+        if (time.rem(1000) == 0L) {
+            println("${time/1000},${creatures.size}")
         }
     }
 

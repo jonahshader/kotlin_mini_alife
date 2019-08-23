@@ -12,6 +12,9 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
     private val eatRate = 0.006f
     private val foodToMass = 50f
     private val sensorPositionMutationRate = 0.02f
+    private val brainAllocatedRecursiveSteps = 8
+
+    private var currentBrainRecursiveStepsRemaining = 8
 
     private var red = random().toFloat()
     private var green = random().toFloat()
@@ -74,10 +77,24 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
         brain.inputNeurons[0] = xSpeed
         brain.inputNeurons[1] = ySpeed
         brain.inputNeurons[2] = size / 30f
-        for (i in 3..5)
-            brain.inputNeurons[i] = world.food.readFood(x + sensor1XOffset, y + sensor1YOffset, i - 3) * 2f
-        for (i in 6..8)
-            brain.inputNeurons[i] = world.food.readFood(x - sensor2XOffset, y - sensor2YOffset, i - 6) * 2f
+
+        var updateBrain = false
+
+
+        for (i in 3..5) {
+            val foodSensor = (world.food.readFood(x + sensor1XOffset, y + sensor1YOffset, i - 3) * 2f) - 1f
+            if (brain.inputNeurons[i] != foodSensor) {
+                brain.inputNeurons[i] = foodSensor
+                currentBrainRecursiveStepsRemaining = brainAllocatedRecursiveSteps // reset recursive brain step timer
+            }
+        }
+        for (i in 6..8) {
+            val foodSensor = (world.food.readFood(x + sensor1XOffset, y + sensor1YOffset, i - 6) * 2f) - 1f
+            if (brain.inputNeurons[i] != foodSensor) {
+                brain.inputNeurons[i] = foodSensor
+                currentBrainRecursiveStepsRemaining = brainAllocatedRecursiveSteps
+            }
+        }
 //        for (i in 8..10)
 //            brain.inputNeurons[i] = world.food.readFood(x + 1, y, i - 8) * 2f
 //        brain.inputNeurons[0] = world.food.readFood(x - 1f, y, FoodColor.RED) * 2f
@@ -95,7 +112,12 @@ class Creature(private var x: Float, private var y: Float, private val world: Wo
 //        brain.inputNeurons[10] = world.food.readFood(x, y - 1f, FoodColor.BLUE) * 2f
 //        brain.inputNeurons[11] = world.food.readFood(x, y + 1f, FoodColor.BLUE) * 2f
 
-        brain.calculateOutputs()
+
+        if (currentBrainRecursiveStepsRemaining > 0) {
+            brain.calculateOutputs()
+            currentBrainRecursiveStepsRemaining--
+        }
+
         xSpeed += (brain.outputNeurons[0] * speedScale - xSpeed) * friction.pow(mass / 10)
         ySpeed += (brain.outputNeurons[1] * speedScale - ySpeed) * friction.pow(mass / 10)
 
