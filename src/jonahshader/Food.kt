@@ -24,7 +24,7 @@ class Food(world: World, val cellSize: Int) {
     private val FOOD_ACCUMULATE_RATE = 1f
     private val FOOD_ADD_CHANCE = 0.000008f
     private val diffuseChance = 0.00f
-    private val metaFoodAddChanceRatio = 1f
+    private val metaFoodAddChanceRatio = 5f
 
 
     private val width = world.width / cellSize
@@ -63,10 +63,6 @@ class Food(world: World, val cellSize: Int) {
             setValue(xd, yd, i, avg)
         }
     }
-
-
-
-
 
     fun readFood(x: Float, y: Float, color: FoodColor) : Float {
         val wrappedY = wrap((y / cellSize).toInt(), height)
